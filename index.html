@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Only this site's own script files may run, and the page cannot send data anywhere. file: keeps it working when opened from disk. -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' file:; connect-src data:; base-uri 'none'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Flow4U</title>
+    <meta
+      name="description"
+      content="Manage staff, projects and tasks in the browser. Import and export Excel files, attach files to tasks and keep backups."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+      <symbol id="i-overview" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></symbol>
+      <symbol id="i-tasks" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></symbol>
+      <symbol id="i-data" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+      <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m17 8-5-5-5 5" /><path d="M12 3v12" /></symbol>
+      <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></symbol>
+    </svg>
+
+    <div class="app">
+      <aside class="sidebar">
+        <a class="brand" href="#/overview">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="7" fill="#2155c4" />
+            <rect x="8" y="8.5" width="16" height="3.5" rx="1.75" fill="#fff" />
+            <rect x="8" y="14.25" width="11.5" height="3.5" rx="1.75" fill="#fff" opacity=".85" />
+            <rect x="8" y="20" width="7" height="3.5" rx="1.75" fill="#fff" opacity=".7" />
+          </svg>
+          <span class="brand-text">
+            <span class="brand-name" id="brand-name">Flow4U</span>
+            <span class="brand-sub" id="brand-sub">Work management</span>
+          </span>
+        </a>
+
+        <nav class="nav" aria-label="Main">
+          <a class="nav-link" href="#/overview" data-route="overview">
+            <svg class="icon" aria-hidden="true"><use href="#i-overview" /></svg><span>Overview</span>
+          </a>
+          <a class="nav-link" href="#/staff" data-route="staff">
+            <svg class="icon" aria-hidden="true"><use href="#i-users" /></svg><span>Staff</span>
+            <span class="nav-count" data-count="staff"></span>
+          </a>
+          <a class="nav-link" href="#/projects" data-route="projects">
+            <svg class="icon" aria-hidden="true"><use href="#i-folder" /></svg><span>Projects</span>
+            <span class="nav-count" data-count="projects"></span>
+          </a>
+          <a class="nav-link" href="#/tasks" data-route="tasks">
+            <svg class="icon" aria-hidden="true"><use href="#i-tasks" /></svg><span>Tasks</span>
+            <span class="nav-count" data-count="tasks"></span>
+          </a>
+          <a class="nav-link" href="#/data" data-route="data">
+            <svg class="icon" aria-hidden="true"><use href="#i-data" /></svg><span>Import &amp; export</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-foot">
+          <button type="button" class="nav-link" data-action="start-tour" aria-label="Quick tour">
+            <svg class="icon" aria-hidden="true"><use href="#i-help" /></svg><span>Quick tour</span>
+          </button>
+          <p class="sidebar-note">Data is saved in this browser.</p>
+        </div>
+      </aside>
+
+      <main class="main">
+        <p class="print-meta" id="print-meta"></p>
+
+        <!-- Overview -->
+        <section class="view" data-view="overview" hidden>
+          <header class="page-head">
+            <div>
+              <h1 tabindex="-1">Overview</h1>
+              <p class="page-sub" id="overview-date"></p>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn" data-action="print">
+                <svg class="icon" aria-hidden="true"><use href="#i-print" /></svg>Print
+              </button>
+            </div>
+          </header>
+
+          <div class="notice" id="tour-notice" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#i-help" /></svg>
+            <p>New here? A five-step tour shows how the workspace is organised.</p>
+            <div class="notice-actions">
+              <button type="button" class="btn btn-sm btn-primary" data-action="start-tour">Take the tour</button>
+              <button type="button" class="icon-btn" data-action="dismiss-tour" aria-label="Dismiss">
+                <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <section class="card setup" id="setup" hidden>
+            <h2 class="card-title">Set up your workspace</h2>
+            <ol class="setup-steps">
+              <li data-step="staff">
+                <span class="step-mark"><span class="step-num">1</span><svg class="icon step-check" aria-hidden="true"><use href="#i-check" /></svg></span>
+                <span class="step-text"><strong>Add your team</strong><span>The people you can put on projects and assign tasks to.</span></span>
+                <button type="button" class="btn btn-sm" data-action="new" data-kind="staff">Add staff member</button>
+              </li>
+              <li data-step="projects">
+                <span class="step-mark"><span class="step-num">2</span><svg class="icon step-check" aria-hidden="true"><use href="#i-check" /></svg></span>
+                <span class="step-text"><strong>Create a project</strong><span>Give it a deadline and choose who works on it.</span></span>
+                <button type="button" class="btn btn-sm" data-action="new" data-kind="projects">Add project</button>
+              </li>
+              <li data-step="tasks">
+                <span class="step-mark"><span class="step-num">3</span><svg class="icon step-check" aria-hidden="true"><use href="#i-check" /></svg></span>
+                <span class="step-text"><strong>Add tasks</strong><span>Break the work down, assign it and track it to done.</span></span>
+                <button type="button" class="btn btn-sm" data-action="new" data-kind="tasks">Add task</button>
+              </li>
+            </ol>
+            <p class="setup-alt">Already keep these lists in Excel? <a href="#/data">Import them instead.</a></p>
+          </section>
+
+          <div class="stats" id="stats"></div>
+
+          <div class="panels">
+            <section class="card panel">
+              <header class="panel-head">
+                <h2>Needs attention</h2>
+                <a class="panel-link" href="#/tasks">All tasks</a>
+              </header>
+              <div id="panel-attention"></div>
+            </section>
+            <section class="card panel">
+              <header class="panel-head">
+                <h2>Project progress</h2>
+                <a class="panel-link" href="#/projects">All projects</a>
+              </header>
+              <div id="panel-projects"></div>
+            </section>
+            <section class="card panel">
+              <header class="panel-head">
+                <h2>Workload</h2>
+                <a class="panel-link" href="#/staff">All staff</a>
+              </header>
+              <div id="panel-workload"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- Staff -->
+        <section class="view" data-view="staff" hidden>
+          <header class="page-head">
+            <div>
+              <h1 tabindex="-1">Staff</h1>
+              <p class="page-sub" data-summary="staff"></p>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn" data-action="print">
+                <svg class="icon" aria-hidden="true"><use href="#i-print" /></svg>Print
+              </button>
+              <button type="button" class="btn btn-primary" data-action="new" data-kind="staff">
+                <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Add staff member
+              </button>
+            </div>
+          </header>
+          <div class="toolbar">
+            <label class="search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+              <input type="search" placeholder="Search name, role, department" aria-label="Search staff" data-filter="staff.q" autocomplete="off" />
+            </label>
+            <select data-filter="staff.status" data-options="staffStatus" data-all="All statuses" aria-label="Filter by status"></select>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="clear-filters" data-kind="staff" hidden>Clear filters</button>
+            <span class="result-count" data-result="staff"></span>
+          </div>
+          <div class="card table-card">
+            <table class="table" data-table="staff"><thead></thead><tbody></tbody></table>
+          </div>
+        </section>
+
+        <!-- Projects -->
+        <section class="view" data-view="projects" hidden>
+          <header class="page-head">
+            <div>
+              <h1 tabindex="-1">Projects</h1>
+              <p class="page-sub" data-summary="projects"></p>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn" data-action="print">
+                <svg class="icon" aria-hidden="true"><use href="#i-print" /></svg>Print
+              </button>
+              <button type="button" class="btn btn-primary" data-action="new" data-kind="projects">
+                <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Add project
+              </button>
+            </div>
+          </header>
+          <div class="toolbar">
+            <label class="search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+              <input type="search" placeholder="Search projects or clients" aria-label="Search projects" data-filter="projects.q" autocomplete="off" />
+            </label>
+            <select data-filter="projects.status" data-options="projectStatus" data-all="All statuses" aria-label="Filter by status"></select>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="clear-filters" data-kind="projects" hidden>Clear filters</button>
+            <span class="result-count" data-result="projects"></span>
+          </div>
+          <div class="card table-card">
+            <table class="table" data-table="projects"><thead></thead><tbody></tbody></table>
+          </div>
+        </section>
+
+        <!-- Tasks -->
+        <section class="view" data-view="tasks" hidden>
+          <header class="page-head">
+            <div>
+              <h1 tabindex="-1">Tasks</h1>
+              <p class="page-sub" data-summary="tasks"></p>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn" data-action="print">
+                <svg class="icon" aria-hidden="true"><use href="#i-print" /></svg>Print
+              </button>
+              <button type="button" class="btn btn-primary" data-action="new" data-kind="tasks">
+                <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Add task
+              </button>
+            </div>
+          </header>
+          <div class="toolbar">
+            <label class="search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+              <input type="search" placeholder="Search tasks" aria-label="Search tasks" data-filter="tasks.q" autocomplete="off" />
+            </label>
+            <select data-filter="tasks.project" aria-label="Filter by project"></select>
+            <select data-filter="tasks.assignee" aria-label="Filter by assignee"></select>
+            <select data-filter="tasks.status" data-options="taskStatus" data-all="All statuses" data-open="Open (not done)" aria-label="Filter by status"></select>
+            <select data-filter="tasks.priority" data-options="priority" data-all="All priorities" aria-label="Filter by priority"></select>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="clear-filters" data-kind="tasks" hidden>Clear filters</button>
+            <span class="result-count" data-result="tasks"></span>
+          </div>
+          <div class="card table-card">
+            <table class="table" data-table="tasks"><thead></thead><tbody></tbody></table>
+          </div>
+        </section>
+
+        <!-- Import & export -->
+        <section class="view" data-view="data" hidden>
+          <header class="page-head">
+            <div>
+              <h1 tabindex="-1">Import &amp; export</h1>
+              <p class="page-sub">Move records in and out with Excel, CSV and Word files, and keep backups.</p>
+            </div>
+          </header>
+
+          <section class="card settings">
+            <h2 class="card-title">Import</h2>
+            <div class="setting-row">
+              <div>
+                <h3>Import from Excel or CSV</h3>
+                <p>
+                  Reads .xlsx, .xls, .ods and .csv files. Sheets named Staff, Projects and Tasks are picked up
+                  automatically, as is any sheet with matching column headers. You can review the changes before
+                  anything is saved.
+                </p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn" data-action="download-template">
+                  <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg>Blank template
+                </button>
+                <button type="button" class="btn btn-primary" data-action="import">
+                  <svg class="icon" aria-hidden="true"><use href="#i-upload" /></svg>Choose file
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card settings">
+            <h2 class="card-title">Export</h2>
+            <div class="setting-row">
+              <div>
+                <h3>Excel workbook</h3>
+                <p>Staff, projects and tasks on separate sheets. Opens in Excel, Google Sheets and LibreOffice, and can be imported back.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn" data-action="export-xlsx">
+                  <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg>Export .xlsx
+                </button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <h3>CSV files</h3>
+                <p>One file per list, saved as UTF-8 so Arabic and other scripts display correctly in Excel.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn" data-action="export-csv" data-kind="staff">Staff</button>
+                <button type="button" class="btn" data-action="export-csv" data-kind="projects">Projects</button>
+                <button type="button" class="btn" data-action="export-csv" data-kind="tasks">Tasks</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <h3>Word report</h3>
+                <p>A formatted summary of projects, tasks and staff to share or print. Opens in Microsoft Word and LibreOffice.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn" data-action="export-doc">
+                  <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg>Export .doc
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card settings">
+            <h2 class="card-title">Backup</h2>
+            <div class="setting-row">
+              <div>
+                <h3>Download backup</h3>
+                <p>One .json file with every record and attached file. Use it to keep a safe copy or move your data to another browser or computer.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn" data-action="backup">
+                  <svg class="icon" aria-hidden="true"><use href="#i-download" /></svg>Download backup
+                </button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <h3>Restore from backup</h3>
+                <p>Replaces everything in this browser with the contents of a backup file.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn" data-action="restore">
+                  <svg class="icon" aria-hidden="true"><use href="#i-upload" /></svg>Restore
+                </button>
+              </div>
+            </div>
+            <p class="settings-foot" id="storage-summary"></p>
+          </section>
+
+          <section class="card settings">
+            <h2 class="card-title">Workspace</h2>
+            <div class="setting-row">
+              <div>
+                <h3>Workspace name</h3>
+                <p>Shown in the sidebar and at the top of exported reports.</p>
+              </div>
+              <form class="inline-form" data-form="workspace">
+                <input type="text" name="workspaceName" maxlength="60" dir="auto" aria-label="Workspace name" placeholder="Flow4U" autocomplete="off" />
+                <button type="submit" class="btn">Save</button>
+              </form>
+            </div>
+            <div class="setting-row">
+              <div>
+                <h3>Delete all data</h3>
+                <p>Permanently removes every staff member, project, task and attached file from this browser.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" class="btn btn-danger-outline" data-action="clear-all">Delete all data</button>
+              </div>
+            </div>
+          </section>
+
+          <input type="file" id="import-input" accept=".xlsx,.xlsm,.xls,.ods,.csv" hidden />
+          <input type="file" id="restore-input" accept=".json,application/json" hidden />
+        </section>
+      </main>
+    </div>
+
+    <!-- Staff form -->
+    <dialog class="dialog" id="dialog-staff" aria-labelledby="dialog-staff-title">
+      <form class="dialog-form" data-form="staff">
+        <header class="dialog-head">
+          <h2 id="dialog-staff-title">Add staff member</h2>
+          <button type="button" class="icon-btn" data-action="close-dialog" aria-label="Close">
+            <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+          </button>
+        </header>
+        <div class="dialog-body form-grid">
+          <input type="hidden" name="id" />
+          <label class="field f-wide">
+            <span class="field-label">Full name <span class="req" aria-hidden="true">*</span></span>
+            <input type="text" name="name" required maxlength="120" dir="auto" autocomplete="off" autofocus />
+          </label>
+          <label class="field f-narrow">
+            <span class="field-label">Status</span>
+            <select name="status" data-options="staffStatus"></select>
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Role</span>
+            <input type="text" name="role" maxlength="120" dir="auto" list="list-roles" autocomplete="off" />
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Department</span>
+            <input type="text" name="department" maxlength="120" dir="auto" list="list-departments" autocomplete="off" />
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Email</span>
+            <input type="email" name="email" maxlength="160" dir="ltr" autocomplete="off" />
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Phone</span>
+            <input type="tel" name="phone" maxlength="40" dir="ltr" autocomplete="off" />
+          </label>
+        </div>
+        <footer class="dialog-foot">
+          <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Project form -->
+    <dialog class="dialog" id="dialog-projects" aria-labelledby="dialog-projects-title">
+      <form class="dialog-form" data-form="projects">
+        <header class="dialog-head">
+          <h2 id="dialog-projects-title">Add project</h2>
+          <button type="button" class="icon-btn" data-action="close-dialog" aria-label="Close">
+            <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+          </button>
+        </header>
+        <div class="dialog-body form-grid">
+          <input type="hidden" name="id" />
+          <label class="field f-wide">
+            <span class="field-label">Project name <span class="req" aria-hidden="true">*</span></span>
+            <input type="text" name="name" required maxlength="160" dir="auto" autocomplete="off" autofocus />
+          </label>
+          <label class="field f-narrow">
+            <span class="field-label">Status</span>
+            <select name="status" data-options="projectStatus"></select>
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Client or department</span>
+            <input type="text" name="client" maxlength="160" dir="auto" list="list-clients" autocomplete="off" />
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Deadline</span>
+            <input type="date" name="deadline" />
+          </label>
+          <fieldset class="field f-full">
+            <legend class="field-label">Team</legend>
+            <div class="checklist" id="project-team"></div>
+          </fieldset>
+          <label class="field f-full">
+            <span class="field-label">Description</span>
+            <textarea name="description" rows="3" maxlength="4000" dir="auto"></textarea>
+          </label>
+        </div>
+        <footer class="dialog-foot">
+          <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Task form -->
+    <dialog class="dialog dialog-wide" id="dialog-tasks" aria-labelledby="dialog-tasks-title">
+      <form class="dialog-form" data-form="tasks">
+        <header class="dialog-head">
+          <h2 id="dialog-tasks-title">Add task</h2>
+          <button type="button" class="icon-btn" data-action="close-dialog" aria-label="Close">
+            <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+          </button>
+        </header>
+        <div class="dialog-body form-grid">
+          <input type="hidden" name="id" />
+          <label class="field f-wide">
+            <span class="field-label">Title <span class="req" aria-hidden="true">*</span></span>
+            <input type="text" name="title" required maxlength="200" dir="auto" autocomplete="off" autofocus />
+          </label>
+          <label class="field f-narrow">
+            <span class="field-label">Status</span>
+            <select name="status" data-options="taskStatus"></select>
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Project</span>
+            <select name="projectId"></select>
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Assignee</span>
+            <select name="assigneeId"></select>
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Priority</span>
+            <select name="priority" data-options="priority"></select>
+          </label>
+          <label class="field f-half">
+            <span class="field-label">Due date</span>
+            <input type="date" name="dueDate" />
+          </label>
+          <label class="field f-full">
+            <span class="field-label">Description</span>
+            <textarea name="description" rows="3" maxlength="4000" dir="auto"></textarea>
+          </label>
+          <div class="field f-full">
+            <span class="field-label">Files</span>
+            <div class="dropzone" id="task-dropzone">
+              <ul class="file-list" id="task-file-list"></ul>
+              <div class="dropzone-hint">
+                <button type="button" class="btn btn-sm" data-action="add-files">
+                  <svg class="icon" aria-hidden="true"><use href="#i-paperclip" /></svg>Attach files
+                </button>
+                <span id="files-hint">or drop files here</span>
+              </div>
+              <input type="file" id="task-file-input" multiple hidden />
+            </div>
+          </div>
+        </div>
+        <footer class="dialog-foot">
+          <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Import review -->
+    <dialog class="dialog" id="dialog-import" aria-labelledby="dialog-import-title">
+      <form class="dialog-form" data-form="import">
+        <header class="dialog-head">
+          <h2 id="dialog-import-title">Review import</h2>
+          <button type="button" class="icon-btn" data-action="close-dialog" aria-label="Close">
+            <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+          </button>
+        </header>
+        <div class="dialog-body">
+          <div id="import-summary"></div>
+          <fieldset class="radio-group">
+            <legend>How should this file be applied?</legend>
+            <label class="radio-card">
+              <input type="radio" name="mode" value="merge" checked />
+              <span>
+                <strong>Add and update</strong>
+                <small>Keep current records. Rows with a name that already exists update that record.</small>
+              </span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="mode" value="replace" />
+              <span>
+                <strong>Replace everything</strong>
+                <small>Delete the current staff, projects, tasks and attached files first.</small>
+              </span>
+            </label>
+          </fieldset>
+          <div id="import-warnings"></div>
+        </div>
+        <footer class="dialog-foot">
+          <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+          <button type="submit" class="btn btn-primary">Import</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Confirmation -->
+    <dialog class="dialog dialog-sm" id="dialog-confirm" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <form method="dialog" class="dialog-form">
+        <div class="dialog-body confirm-body">
+          <h2 id="confirm-title"></h2>
+          <p id="confirm-message"></p>
+        </div>
+        <footer class="dialog-foot">
+          <button type="submit" class="btn" value="cancel" autofocus>Cancel</button>
+          <button type="submit" class="btn btn-danger" value="confirm" id="confirm-ok">Delete</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Tour -->
+    <div class="tour" id="tour" role="dialog" aria-labelledby="tour-title" aria-describedby="tour-text" hidden>
+      <p class="tour-step" id="tour-step"></p>
+      <h2 id="tour-title"></h2>
+      <p class="tour-text" id="tour-text"></p>
+      <div class="tour-foot">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="tour-end">Skip tour</button>
+        <div class="tour-nav">
+          <button type="button" class="btn btn-sm" data-action="tour-back">Back</button>
+          <button type="button" class="btn btn-sm btn-primary" data-action="tour-next">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+    <datalist id="list-roles"></datalist>
+    <datalist id="list-departments"></datalist>
+    <datalist id="list-clients"></datalist>
+
+    <script src="script.js"></script>
+  </body>
+</html>
